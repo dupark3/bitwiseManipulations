@@ -3,6 +3,7 @@
 
 #include <cinttypes>
 #include <iostream>
+#include <stdexcept>
 
 using namespace std;
 
@@ -19,6 +20,20 @@ private:
 class List{
 public:
     List() : head(0), tail(0) { }
+    ~List() {
+        while(head){
+            Node* prev = head;
+            head = head->combined_address;
+            if (head){
+                head->combined_address = (Node*)((uintptr_t)head->combined_address ^ (uintptr_t)prev);
+            }
+            delete prev;
+        }
+    }
+
+    bool is_empty(){
+        return head;
+    }
 
     void push_back(int data){
         if (!head){
@@ -45,12 +60,38 @@ public:
         }
     }
 
-    void pop_back(){
+    int pop_back(){
+        if (!tail){
+            throw logic_error("empty list");
+        } else {
+            int val = tail->val;
 
+            Node* temp = tail;
+            tail = tail->combined_address;
+            if (tail){
+                tail->combined_address = (Node*)((uintptr_t)tail->combined_address ^ (uintptr_t)temp);
+            }            
+            delete temp;
+
+            return val;
+        }
     }
 
-    void pop_front(){
+    int pop_front(){
+        if (!head){
+            throw logic_error("empty list");
+        } else {
+            int val = head->val;
 
+            Node* temp = head;
+            head = head->combined_address;
+            if (head){                
+                head->combined_address = (Node*)((uintptr_t)head->combined_address ^ (uintptr_t)temp);
+            }
+            delete temp;
+
+            return val;
+        }
     }
 
     void traverse_forward(){
@@ -66,7 +107,15 @@ public:
     }
 
     void traverse_reverse(){
-
+        Node* temp = tail;
+        Node* next = 0;
+        while(temp){
+            cout << temp->val << " ";
+            Node* temp_copy = temp;
+            temp = (Node*)((uintptr_t)temp->combined_address ^ (uintptr_t)next);
+            next = temp_copy;
+        }
+        cout << endl;
     }
 private:
     Node* head;
@@ -83,6 +132,20 @@ int main(){
     
     cout << "traversing : " << endl;
     list.traverse_forward();
+    list.traverse_reverse();
 
+    cout << endl << "popping last item which was " << list.pop_back() << endl;
+    cout << "traversing : " << endl;
+    list.traverse_forward();
+    list.traverse_reverse();
+
+    cout << endl << "popping first item which was " << list.pop_front() << endl;
+    cout << "traversing : " << endl;
+    list.traverse_forward();
+    list.traverse_reverse();
+
+    List list2;
+    list2.push_front(3);
+    cout << list2.pop_back() << endl;
     return 0;
 }
